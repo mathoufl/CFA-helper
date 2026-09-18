@@ -7,8 +7,9 @@ Todo · MD
  
 - [x] Définir le format de sortie (structure Définition / Raisonnement / Proposition / Corollaires)
 - [x] Rédiger le prompt de synthèse
-- [ ] Définir le format JSON de sortie du script d'extraction
-- [ ] Écrire le script Python d'extraction HTML → JSON
+- [x] Définir le format JSON de sortie du script d'extraction
+- [x] Écrire le script Python d'extraction HTML → JSON
+- [ ] Faire un helper pour Browse le cours facilement et ne pas faire l'extract du code html à la main
 - [ ] Tester le pipeline complet en session réelle et collecter les retours
 ## Long terme — Système avancé
  

@@ -12,11 +12,16 @@ Le cours CFA est extrait depuis l'interface web (HTML) ou le PDF, prétraité pa
  
 ```
 cfa-study-pipeline/
+├── classes/
+│   ├── raw/                    # HTML brut extrait, organisé par module
+│   │   └── <nom-chapitre>/
+│   └── parsed/                 # JSON prétraité prêt à passer à Claude
+│       └── <nom-chapitre>/
+├── source-pdf/                 # PDFs officiels CFA Level 1 2026
 ├── prompt/
-│   └── system_prompt.md        # Prompt de synthèse validé
+│   └── system_prompt.txt       # Prompt de synthèse validé
 ├── scripts/
 │   └── extract.py              # Extraction et prétraitement HTML → JSON
-├── output/                     # Synthèses générées (une par page)
 ├── CLAUDE.md                   # Contexte projet pour Claude
 ├── TODO.md                     # État d'avancement
 └── README.md
@@ -25,10 +30,11 @@ cfa-study-pipeline/
 ## Workflow
  
 1. Ouvrir une session par cours dans Claude
-2. Passer le prompt (`prompt/system_prompt.md`) + les LOS du module en début de session
+2. Passer le prompt (`prompt/system_prompt.txt`) + les LOS du module en début de session
 3. Extraire le HTML de chaque page via `scripts/extract.py`
 4. Passer le JSON extrait page par page à Claude
-5. Copier la synthèse dans `output/`
+5. Copier la synthèse dans `classes/parsed/<module>/`
+ 
 ## Stack
  
 - Python 3 (extraction et prétraitement HTML)
