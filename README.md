@@ -64,27 +64,26 @@ python -m playwright install chromium
 
 ```bash
 # Ouvrir le browser interactif
-python scripts/browse.py --course <nom-cours> --module <N> --page <N>
+python scripts/browse.py --course <nom-cours>
 
 # Exemple :
-python scripts/browse.py --course corporate-issuers --module 6 --page 4
+python scripts/browse.py --course corporate-issuers
 ```
 
 Au premier lancement, Chromium s'ouvre sur une page vierge — navigue vers le cours et connecte-toi. La session est sauvegardée dans `.chromium-profile/` et persistera aux lancements suivants.
 
+Le module et la page sont détectés automatiquement depuis le titre de la page courante (`6.04 | ...` devient `module6_page4`). Il suffit de naviguer vers la page voulue et d'appuyer sur Entrée.
+
 **Raccourcis dans le terminal :**
 
-| Commande      | Action                                      |
-|---------------|---------------------------------------------|
-| `Entrée`      | Extraire la page courante (HTML + JSON)     |
-| `m + Entrée`  | Modifier les coordonnées (cours/module/page)|
-| `q + Entrée`  | Quitter                                     |
+| Commande      | Action                                       |
+|---------------|----------------------------------------------|
+| `Entrée`      | Extraire la page courante (module/page auto) |
+| `q + Entrée`  | Quitter                                      |
 
 Le script sauvegarde automatiquement :
 - Le HTML brut dans `classes/raw/<cours>/`
 - Le JSON parsé dans `classes/parsed/<cours>/`
-
-Et propose l'auto-incrément de page après chaque extraction.
 
 ### 3. Session de synthèse avec Claude
 
