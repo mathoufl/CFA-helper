@@ -16,9 +16,12 @@ cfa-study-pipeline/
 │   ├── raw/                        # HTML brut extrait, organisé par cours
 │   │   └── <nom-cours>/
 │   │       └── <nom-cours>_module<N>_page<N>.html
-│   └── parsed/                     # JSON prétraité prêt à passer à Claude
+│   ├── parsed/                     # JSON prétraité prêt à passer à Claude
+│   │   └── <nom-cours>/
+│   │       └── <nom-cours>_module<N>_page<N>.json
+│   └── processed/                  # Synthèses Markdown générées par Claude
 │       └── <nom-cours>/
-│           └── <nom-cours>_module<N>_page<N>.json
+│           └── <nom-cours>_module<N>_page<N>.md
 ├── source-pdf/                     # PDFs officiels CFA Level 1 2026
 ├── prompt/
 │   └── system_prompt.txt           # Prompt de synthèse validé

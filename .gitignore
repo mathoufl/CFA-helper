@@ -6,3 +6,4 @@
 source-pdf/*
 classes/raw/*/*
 classes/parsed/*/*
+classes/processed/*/*

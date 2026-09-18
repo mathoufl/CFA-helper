@@ -7,7 +7,7 @@
 - [x] Définir le format JSON de sortie du script d'extraction
 - [x] Écrire le script d'extraction HTML → JSON (`scripts/extract.py`)
 - [x] Écrire le script de browser automation (`scripts/browse.py`)
-- [ ] Tester le pipeline complet en session réelle et collecter les retours
+- [x] Tester le pipeline complet en session réelle et collecter les retours
 
 ## Long terme — Système avancé
 

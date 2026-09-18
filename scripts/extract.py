@@ -1,28 +1,27 @@
-
 """
 extract.py
 ----------
 Extrait le contenu pédagogique d'une page HTML du cours CFA
 et produit un JSON structuré prêt à être passé à Claude.
- 
+
 Usage :
     python extract.py <input.html> <output.json>
- 
+
     ou en passant le HTML via stdin :
     cat page.html | python extract.py - output.json
 """
- 
+
 import json
 import re
 import sys
 from pathlib import Path
 from bs4 import BeautifulSoup
- 
- 
+
+
 # ---------------------------------------------------------------------------
 # Utilitaires
 # ---------------------------------------------------------------------------
- 
+
 def clean_text(element) -> str:
     """Retourne le texte brut d'un élément BeautifulSoup, nettoyé."""
     if element is None:
@@ -34,16 +33,16 @@ def clean_text(element) -> str:
     # Normaliser les espaces multiples
     text = re.sub(r" +", " ", text)
     return text.strip()
- 
- 
+
+
 def extract_mathml(formula_container) -> str:
     """Extrait le MathML brut depuis un conteneur de formule."""
     script = formula_container.find("script", {"type": "math/mml"})
     if script:
         return script.string.strip() if script.string else ""
     return ""
- 
- 
+
+
 def get_formula_number(formula_container) -> int | None:
     """Extrait le numéro de formule depuis le span dédié."""
     span = formula_container.find("span", class_="cfa-curriculum-display-formula-number")
@@ -53,12 +52,12 @@ def get_formula_number(formula_container) -> int | None:
         except ValueError:
             return None
     return None
- 
- 
+
+
 # ---------------------------------------------------------------------------
 # Extracteurs par type de bloc
 # ---------------------------------------------------------------------------
- 
+
 def extract_formulas(container) -> list[dict]:
     """Extrait toutes les formules d'un conteneur."""
     formulas = []
@@ -74,8 +73,8 @@ def extract_formulas(container) -> list[dict]:
             "mathml": mathml
         })
     return formulas
- 
- 
+
+
 def extract_exhibits(container) -> list[dict]:
     """Extrait les références aux graphiques/tableaux."""
     exhibits = []
@@ -106,8 +105,8 @@ def extract_exhibits(container) -> list[dict]:
             "description": description
         })
     return exhibits
- 
- 
+
+
 def extract_summary_boxes(container) -> list[dict]:
     """Extrait les encadrés de synthèse (shaded boxes)."""
     boxes = []
@@ -123,8 +122,8 @@ def extract_summary_boxes(container) -> list[dict]:
             "content": content
         })
     return boxes
- 
- 
+
+
 def extract_examples(container) -> list[dict]:
     """Extrait les blocs exemple."""
     examples = []
@@ -141,8 +140,8 @@ def extract_examples(container) -> list[dict]:
             "content": content
         })
     return examples
- 
- 
+
+
 def extract_section_content(section) -> str:
     """
     Extrait le texte brut d'une section en excluant les blocs
@@ -163,31 +162,36 @@ def extract_section_content(section) -> str:
     for tag in clone.find_all(["h3", "h4"]):
         tag.decompose()
     return clean_text(clone)
- 
- 
+
+
 # ---------------------------------------------------------------------------
 # Extraction principale
 # ---------------------------------------------------------------------------
- 
+
 def extract_sections(main_div) -> list[dict]:
     """
-    Extrait récursivement les sections h3 et leurs sous-sections h4.
+    Extrait les sections h3 et leurs sous-sections h4.
+    Les sections sont dans le div.dp-wrapper, pas directement sous role=main.
     """
     sections = []
- 
-    for section in main_div.find_all("section", recursive=False):
+
+    # Les sections sont imbriquees dans dp-wrapper, pas sous role=main directement
+    wrapper = main_div.find("div", class_="dp-wrapper")
+    container = wrapper if wrapper else main_div
+
+    for section in container.find_all("section", recursive=False):
         section_id = section.get("id", "")
- 
+
         # Titre h3
         h3 = section.find("h3", class_="dp-heading")
         title = clean_text(h3) if h3 else ""
- 
+
         content = extract_section_content(section)
         formulas = extract_formulas(section)
         exhibits = extract_exhibits(section)
         summary_boxes = extract_summary_boxes(section)
         examples = extract_examples(section)
- 
+
         # Sous-sections h4 (traitées comme sections imbriquées)
         subsections = []
         for subsection in section.find_all("section", recursive=False):
@@ -205,7 +209,7 @@ def extract_sections(main_div) -> list[dict]:
                 "examples": extract_examples(subsection),
                 "subsections": []
             })
- 
+
         sections.append({
             "id": section_id,
             "title": title,
@@ -217,10 +221,10 @@ def extract_sections(main_div) -> list[dict]:
             "examples": examples,
             "subsections": subsections
         })
- 
+
     return sections
- 
- 
+
+
 def extract_los(main_div) -> list[str]:
     """Extrait les Learning Outcome Statements."""
     los_box = main_div.find("div", class_="cfa-curriculum-los-box")
@@ -230,8 +234,8 @@ def extract_los(main_div) -> list[str]:
         clean_text(li)
         for li in los_box.find_all("li", class_="cfa-curriculum-los-item")
     ]
- 
- 
+
+
 def extract_page_meta(main_div) -> dict:
     """Extrait les métadonnées de la page (id, titre, module)."""
     wrapper = main_div.find("div", class_="dp-wrapper")
@@ -246,19 +250,19 @@ def extract_page_meta(main_div) -> dict:
             pre.decompose()
         title = clean_text(title_tag)
     return {"id": page_id, "title": title, "module": module}
- 
- 
+
+
 def extract(html: str) -> dict:
     """Point d'entrée principal : HTML -> dict structuré."""
     soup = BeautifulSoup(html, "html.parser")
     main_div = soup.find(attrs={"role": "main"})
     if not main_div:
         raise ValueError("Impossible de trouver la balise role='main' dans le HTML.")
- 
+
     meta = extract_page_meta(main_div)
     los = extract_los(main_div)
     sections = extract_sections(main_div)
- 
+
     return {
         "module": meta["module"],
         "page": {
@@ -268,34 +272,34 @@ def extract(html: str) -> dict:
             "sections": sections
         }
     }
- 
- 
+
+
 # ---------------------------------------------------------------------------
 # CLI
 # ---------------------------------------------------------------------------
- 
+
 def main():
     if len(sys.argv) < 3:
         print("Usage: python extract.py <input.html> <output.json>")
         print("       cat page.html | python extract.py - output.json")
         sys.exit(1)
- 
+
     input_arg = sys.argv[1]
     output_path = Path(sys.argv[2])
- 
+
     if input_arg == "-":
         html = sys.stdin.read()
     else:
         html = Path(input_arg).read_text(encoding="utf-8")
- 
+
     result = extract(html)
- 
+
     output_path.write_text(
         json.dumps(result, ensure_ascii=False, indent=2),
         encoding="utf-8"
     )
     print(f"✓ Extraction terminée → {output_path}")
- 
- 
+
+
 if __name__ == "__main__":
     main()

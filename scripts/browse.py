@@ -45,29 +45,33 @@ USER_DATA_DIR = REPO_ROOT / ".chromium-profile"
 def detect_coordinates(page_playwright) -> tuple[int, int] | None:
     """
     Lit le titre de la page dans le DOM et en extrait module et page.
-    Le titre attendu est de la forme : "6.04 | Modigliani–Miller..."
-    Retourne (module, page) ou None si la détection échoue.
+    Le titre attendu est de la forme : "6.04 | Modigliani-Miller..."
+    Retourne (module, page) ou None si la detection echoue.
     """
+    # Essai 1 : h2.dp-heading
     try:
-        # Cherche le h2 avec la classe dp-heading qui contient "X.YY | ..."
         title = page_playwright.locator("h2.dp-heading").first.inner_text(timeout=3000)
-        # Extrait le pattern X.YY en début de titre
         match = re.search(r"(\d+)\.(\d+)", title)
         if match:
-            module = int(match.group(1))
-            page_num = int(match.group(2))
-            return module, page_num
+            return int(match.group(1)), int(match.group(2))
     except Exception:
         pass
 
-    # Fallback : cherche dans le titre de l'onglet
+    # Essai 2 : titre de l'onglet
     try:
         title = page_playwright.title()
         match = re.search(r"(\d+)\.(\d+)", title)
         if match:
-            module = int(match.group(1))
-            page_num = int(match.group(2))
-            return module, page_num
+            return int(match.group(1)), int(match.group(2))
+    except Exception:
+        pass
+
+    # Essai 3 : n'importe quel h2
+    try:
+        for title in page_playwright.locator("h2").all_inner_texts():
+            match = re.search(r"(\d+)\.(\d+)", title)
+            if match:
+                return int(match.group(1)), int(match.group(2))
     except Exception:
         pass
 
@@ -172,9 +176,10 @@ def main():
         )
 
         if not browser.pages:
-            page = browser.new_page()
-        else:
-            page = browser.pages[0]
+            browser.new_page()
+
+        # Ouvrir sur Google pour faciliter la navigation
+        browser.pages[-1].goto("https://learndashboard.cfainstitute.org/dashboard/in-progress")
 
         print("  Chromium ouvert. Navigue vers la page voulue puis appuie sur Entrée.\n")
 
@@ -186,6 +191,22 @@ def main():
                     print("  Au revoir.")
                     break
                 else:
+                    # Prendre le dernier onglet accessible
+                    pages = browser.pages
+                    if not pages:
+                        print("  ✗ Aucun onglet ouvert.")
+                        continue
+                    page = None
+                    for p in reversed(pages):
+                        try:
+                            _ = p.url
+                            page = p
+                            break
+                        except Exception:
+                            continue
+                    if page is None:
+                        print("  ✗ Aucun onglet accessible.")
+                        continue
                     extract_page(page, course)
                     print()
 
