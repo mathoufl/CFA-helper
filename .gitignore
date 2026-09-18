@@ -1,3 +1,8 @@
+# Techincal folder that would flood my git
+.venv/
+.chromium-profile/
+
+# Folders that contains protected info
 source-pdf/*
 classes/raw/*/*
 classes/parsed/*/*
